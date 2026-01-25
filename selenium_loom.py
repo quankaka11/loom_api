@@ -12,6 +12,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
 from typing import Dict, Any
 
 
@@ -51,7 +53,9 @@ class SeleniumLoomCrawler:
         chrome_options.add_experimental_option('excludeSwitches', ['enable-logging', 'enable-automation'])
         chrome_options.add_experimental_option('useAutomationExtension', False)
         
-        self.driver = webdriver.Chrome(options=chrome_options)
+        # Use ChromeDriverManager to automatically download and manage ChromeDriver
+        service = Service(ChromeDriverManager().install())
+        self.driver = webdriver.Chrome(service=service, options=chrome_options)
         print("✅ Đã khởi tạo Chrome WebDriver")
     
     def close_driver(self):
