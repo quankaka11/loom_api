@@ -12,8 +12,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
 from typing import Dict, Any
 
 
@@ -49,8 +47,16 @@ class SeleniumLoomCrawler:
         chrome_options.add_argument('--disable-setuid-sandbox')
         chrome_options.add_argument('--remote-debugging-port=9222')
         
+        # Additional stability options
+        chrome_options.add_experimental_option('excludeSwitches', ['enable-logging', 'enable-automation'])
+        chrome_options.add_experimental_option('useAutomationExtension', False)
+        
         # Try to find Chrome binary on the system
         chrome_binary_paths = [
+            # Chrome for Testing (from build.sh)
+            os.path.join(os.getcwd(), 'chrome-linux64', 'chrome'),
+            os.path.join(os.path.dirname(__file__), 'chrome-linux64', 'chrome'),
+            # System Chrome/Chromium
             '/usr/bin/chromium-browser',
             '/usr/bin/chromium',
             '/usr/bin/google-chrome',
@@ -58,34 +64,24 @@ class SeleniumLoomCrawler:
             '/snap/bin/chromium',
         ]
         
+        chrome_found = False
         for binary_path in chrome_binary_paths:
             if os.path.exists(binary_path):
                 chrome_options.binary_location = binary_path
+                chrome_found = True
                 print(f"✅ Found Chrome at: {binary_path}")
                 break
         
-        # Additional stability options
-        chrome_options.add_experimental_option('excludeSwitches', ['enable-logging', 'enable-automation'])
-        chrome_options.add_experimental_option('useAutomationExtension', False)
+        if not chrome_found:
+            print("⚠️  Chrome binary not found, using default")
         
-        # Try to use system chromedriver first, then ChromeDriverManager as fallback
+        # Initialize driver - Selenium will find chromedriver automatically
         try:
-            # First, try system chromedriver (from apt.txt)
-            if os.path.exists('/usr/bin/chromedriver'):
-                service = Service('/usr/bin/chromedriver')
-                self.driver = webdriver.Chrome(service=service, options=chrome_options)
-                print("✅ Using system chromedriver")
-            else:
-                # Fallback to ChromeDriverManager
-                service = Service(ChromeDriverManager().install())
-                self.driver = webdriver.Chrome(service=service, options=chrome_options)
-                print("✅ Using ChromeDriverManager")
-        except Exception as e:
-            print(f"⚠️  Error initializing driver: {str(e)}")
-            # Last resort: try without explicit service
             self.driver = webdriver.Chrome(options=chrome_options)
-        
-        print("✅ Đã khởi tạo Chrome WebDriver")
+            print("✅ Đã khởi tạo Chrome WebDriver")
+        except Exception as e:
+            print(f"❌ Error initializing Chrome: {str(e)}")
+            raise
     
     def close_driver(self):
         """Đóng WebDriver"""

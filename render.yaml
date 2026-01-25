@@ -2,8 +2,10 @@ services:
   - type: web
     name: loom-transcript-api
     env: python
-    buildCommand: pip install -r requirements.txt
+    buildCommand: bash build.sh
     startCommand: gunicorn loom_api:app --bind 0.0.0.0:$PORT --timeout 120 --workers 1
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
+      - key: PATH
+        value: /opt/render/project/src/chromedriver-linux64:$PATH
